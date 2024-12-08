@@ -7,6 +7,7 @@ val logger = KotlinLogging.logger {}
 
 fun main() {
     logger.info { "Launching Car App" }
+    addCarData()
     start()
 }
 
@@ -19,11 +20,13 @@ fun menu(): Int {
          |   3. Search Cars
          |   4. Search Cars to Buy
          |   5. Search Cars by County (Registration)
+         |   6. Update Car Details
+         |   7. Remove Car
          |  -1. Exit
          |
          |Enter Option: """.trimMargin()
     )
-    return readLine()?.toIntOrNull() ?: -1
+    return readlnOrNull()?.toIntOrNull() ?: -1
 }
 
 fun start() {
@@ -36,6 +39,8 @@ fun start() {
             3 -> search()
             4 -> searchToBuy()
             5 -> searchByCounty()
+            6 -> update()
+            7 -> remove()
             -1 -> println("Exiting App")
             else -> println("Invalid Option")
         }
@@ -61,7 +66,7 @@ fun search() {
         |Enter Option: 
         """.trimMargin()
     )
-    val option = readLine()?.toIntOrNull() ?: -1
+    val option = readlnOrNull()?.toIntOrNull() ?: -1
 
     when (option) {
         1 -> {
@@ -74,7 +79,7 @@ fun search() {
         }
         2 -> {
             print("Enter the make to search by: ")
-            val make = readLine().orEmpty()
+            val make = readlnOrNull().orEmpty()
             val results = carAPI.findByMake(make)
             if (results.isEmpty()) {
                 println("No cars found with the given make.")
@@ -84,10 +89,10 @@ fun search() {
         }
         3 -> {
             print("Enter the model to search by: ")
-            val model = readLine().orEmpty()
+            val model = readlnOrNull().orEmpty()
             val results = carAPI.findByModel(model)
             if (results.isEmpty()) {
-                println("No cars found with the given model.")
+                println("No cars found with the searched model.")
             } else {
                 results.forEach { println(it) }
             }
@@ -100,9 +105,9 @@ fun searchToBuy() {
     logger.info { "Searching Cars to Buy" }
 
     print("Enter the maximum price: ")
-    val maxPrice = readLine()?.toDoubleOrNull() ?: -1.0
+    val maxPrice = readlnOrNull()?.toDoubleOrNull() ?: -1.0
     print("Enter the car type (e.g., sedan, coupe, hatchback): ")
-    val carType = readLine().orEmpty()
+    val carType = readlnOrNull().orEmpty()
 
     val results = carAPI.findByPriceAndType(maxPrice, carType)
     if (results.isEmpty()) {
@@ -116,8 +121,8 @@ fun searchToBuy() {
 fun searchByCounty() {
     logger.info { "Searching Cars by County (Registration)" }
 
-    print("Enter the county code (e.g., C for Cork, D for Dublin, WX for Wexfodr): ")
-    val countyCode = readLine()?.uppercase() ?: ""
+    print("Enter the county code (e.g., C for Cork, D for Dublin, WX for Wexford): ")
+    val countyCode = readlnOrNull()?.uppercase() ?: ""
 
     if (countyCode in listOf("C", "D", "W", "WX", "KK")) {
         val results = carAPI.findByCountyCode(countyCode)
@@ -134,27 +139,113 @@ fun searchByCounty() {
 
 fun getCarById(): Car? {
     print("Enter the Car id to search by: ")
-    val carID = readLine()?.toIntOrNull() ?: return null
+    val carID = readlnOrNull()?.toIntOrNull() ?: return null
     return carAPI.findOne(carID)
 }
 
 fun add() {
     logger.info { "Adding a Car" }
     print("Enter Make: ")
-    val make = readLine().orEmpty()
+    val make = readlnOrNull().orEmpty()
     print("Enter Model: ")
-    val model = readLine().orEmpty()
+    val model = readlnOrNull().orEmpty()
     print("Enter Car Type (coupe/sedan/hatchback/etc): ")
-    val carType = readLine().orEmpty()
+    val carType = readlnOrNull().orEmpty()
     print("Enter Car Price: ")
-    val carPrice = readLine()?.toDoubleOrNull() ?: 0.0
+    val carPrice = readlnOrNull()?.toDoubleOrNull() ?: 0.0
     print("Enter Car Registration (e.g., 202-C-12345 , please include - to seperate the reg: ")
-    val registration = readLine().orEmpty()
+    val registration = readlnOrNull().orEmpty()
     print("Enter Car Year: ")
-    val year = readLine()?.toIntOrNull() ?: 0
+    val year = readlnOrNull()?.toIntOrNull() ?: 0
 
     carAPI.create(Car(make, model, carType, 0, carPrice, registration, year))
     println("Car added successfully.")
+}
+
+fun remove() {
+    logger.info { "Removing a Car" }
+
+    print("Enter the Car ID to remove: ")
+    val carID = readlnOrNull()?.toIntOrNull()
+    if (carAPI.delete(carID ?: -1)) {
+        println("Car removed successfully.")
+    } else {
+        println("No car found with the given ID.")
+    }
+}
+
+fun update() {
+    logger.info { "Updating Car Details" }
+
+    print("Enter the Car ID to update: ")
+    val carID = readlnOrNull()?.toIntOrNull()
+    val car = carAPI.findOne(carID ?: -1)
+
+    if (car == null) {
+        println("No car found with the given ID.")
+        return
+    }
+
+    var option: Int
+    do {
+        println(
+            """
+            |Update Options:
+            |   1. Update Make
+            |   2. Update Model
+            |   3. Update Car Type
+            |   4. Update Price
+            |   5. Update Registration
+            |   6. Update Year
+            |  -1. Exit Update
+            |
+            |Enter Option: 
+            """.trimMargin()
+        )
+        option = readlnOrNull()?.toIntOrNull() ?: -1
+        when (option) {
+            1 -> {
+                print("Enter new Make: ")
+                car.make = readlnOrNull().orEmpty()
+            }
+            2 -> {
+                print("Enter new Model: ")
+                car.model = readlnOrNull().orEmpty()
+            }
+            3 -> {
+                print("Enter new Car Type: ")
+                car.carType = readlnOrNull().orEmpty()
+            }
+            4 -> {
+                print("Enter new Price: ")
+                car.price = readlnOrNull()?.toDoubleOrNull() ?: car.price
+            }
+            5 -> {
+                print("Enter new Registration: ")
+                car.registration = readlnOrNull().orEmpty()
+            }
+            6 -> {
+                print("Enter new Year: ")
+                car.year = readlnOrNull()?.toIntOrNull() ?: car.year
+            }
+            -1 -> println("Exiting Update Menu.")
+            else -> println("Invalid option.")
+        }
+    } while (option != -1)
+
+    println("Updated Car Details: $car")
+}
+
+fun addCarData() {
+    val cars = listOf(
+        Car("Toyota", "Corolla", "Sedan", 0, 15000.00, "221-D-12345", 2021),
+        Car("Ford", "Focus", "Hatchback", 1, 16000.00, "219-W-67890", 2019),
+        Car("BMW", "320i", "Sedan", 2, 35000.00, "202-C-11223", 2020),
+        Car("Audi", "A4", "Sedan", 3, 50000.00, "201-WX-234", 2020)
+    )
+
+    cars.forEach { carAPI.create(it) }
+    println("Car data added.")
 }
 
 class CarAPI {
@@ -184,6 +275,8 @@ class CarAPI {
             county == countyCode
         }
     }
+
+    fun delete(id: Int): Boolean = cars.removeIf { it.id == id }
 }
 
 data class Car(
@@ -195,4 +288,3 @@ data class Car(
     var registration: String,
     var year: Int
 )
-
